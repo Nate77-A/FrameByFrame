@@ -1,12 +1,12 @@
 @import 'tailwindcss';
-@import '@fontsource/baloo-2/400.css';
-@import '@fontsource/baloo-2/600.css';
-@import '@fontsource/fredoka/400.css';
-@import '@fontsource/comic-neue/400.css';
-@import '@fontsource/comic-neue/700.css';
-@import '@fontsource/nunito/400.css';
-@import '@fontsource/nunito/700.css';
-@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/baloo-2/latin-400.css';
+@import '@fontsource/baloo-2/latin-600.css';
+@import '@fontsource/fredoka/latin-400.css';
+@import '@fontsource/comic-neue/latin-400.css';
+@import '@fontsource/comic-neue/latin-700.css';
+@import '@fontsource/nunito/latin-400.css';
+@import '@fontsource/nunito/latin-700.css';
+@import '@fontsource/jetbrains-mono/latin-400.css';
 
 :root {
   --bg-primary: #1a1a2e; --bg-secondary: #16213e; --bg-tertiary: #0f3460; --bg-canvas: #1e1e30;
@@ -26,7 +26,7 @@
 html, body, #root { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
 body {
   background: var(--bg-primary); color: var(--text-primary); font-family: var(--font-ui); font-size: 15px;
-  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: pan-x pan-y;
 }
 input, textarea, select { user-select: text; -webkit-user-select: text; font: inherit; color: inherit; }
 button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; }
@@ -51,7 +51,7 @@ button:disabled { opacity: .4; cursor: default; }
 /* top bar */
 .topbar { height: 48px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 8px; background: var(--bg-secondary); box-shadow: 0 2px 8px rgba(0,0,0,.3); z-index: 30; position: relative; }
 .logo { font-weight: 600; font-size: 21px; color: var(--accent-secondary); animation: logo-in .7s var(--transition-bounce); padding: 0 8px; }
-.logo b { color: var(--accent-primary); font-weight: 600; }
+.logo b { color: #ff7a90; font-weight: 600; }
 @keyframes logo-in { 0% { transform: translateY(-30px) scale(.7); opacity: 0 } 100% { transform: none; opacity: 1 } }
 .spacer { flex: 1; }
 .sep { width: 1px; height: 26px; background: rgba(160,160,192,.25); margin: 0 4px; }
@@ -61,7 +61,7 @@ button:disabled { opacity: .4; cursor: default; }
   background: #1f2a4d; border-radius: var(--border-radius); box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: pop .18s var(--transition-bounce); }
 .menu-item { width: 100%; min-height: 40px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-radius: 9px; text-align: left; }
 .menu-item:hover:not(:disabled), .menu-item:focus-visible { background: rgba(83,216,251,.15); }
-.menu-item kbd { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+.menu-item kbd { font-family: var(--font-mono); font-size: 14px; color: var(--text-secondary); }
 .menu-sep { height: 1px; margin: 4px 8px; background: rgba(160,160,192,.2); }
 @keyframes pop { 0% { transform: scale(.85); opacity: 0 } 100% { transform: none; opacity: 1 } }
 
@@ -150,6 +150,11 @@ input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); }
 .toasts { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 150; display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; }
 .toast { background: var(--accent-tertiary); color: #15301c; font-weight: 600; padding: 8px 18px; border-radius: 999px; animation: pop .25s var(--transition-bounce); box-shadow: 0 6px 18px rgba(0,0,0,.4); }
 
+svg { flex: none; }
+/* Short screens (iPad landscape): two columns keep all 11 tools in view. */
+@media (max-height: 820px) {
+  .app:not(.compact) .toolbar { width: 120px; flex-flow: row wrap; align-content: flex-start; justify-content: center; }
+}
 /* compact layout (spec §3.2) */
 .compact .toolbar { order: 3; width: 100%; height: 64px; flex-direction: row; padding: 8px; overflow-x: auto; overflow-y: hidden; }
 .compact .main { flex-direction: column; }
@@ -157,7 +162,7 @@ input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); }
 .sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 60vh; z-index: 60; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.5); animation: sheet .25s var(--transition-bounce); width: auto; }
 @keyframes sheet { from { transform: translateY(40%) } }
 .sheet-handle { width: 56px; height: 6px; border-radius: 3px; background: var(--text-secondary); margin: 0 auto 10px; }
-.timeline.overlay { position: fixed; inset: 48px 0 0 0; z-index: 60; height: auto !important; }
+.timeline.overlay { position: fixed; inset: 48px 0 76px 0; z-index: 60; height: auto !important; }
 .bottom-tabs { display: flex; flex: none; gap: 6px; padding: 4px 8px; background: var(--bg-secondary); justify-content: center; }
 
 @media (prefers-reduced-motion: reduce) {

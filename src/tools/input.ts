@@ -23,13 +23,13 @@ export function emitEditText(id: string) { window.dispatchEvent(new CustomEvent(
 export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivElement): () => void {
   let drag: Drag | null = null;
   let dragId: number | null = null;
-  let lastPen = 0;
+  let penSeen = false;
   let inertia = 0;
   let lastTap = { id: '', t: 0 };
   const touches = new Map<number, { x: number; y: number }>();
   let pinch: { dist: number; cx: number; cy: number } | null = null;
 
-  const panBy = (dx: number, dy: number) => { const s = getState(); s.set({ panX: s.panX + dx, panY: s.panY + dy }); };
+  const panBy = (dx: number, dy: number) => { scene.touched = true; const s = getState(); s.set({ panX: s.panX + dx, panY: s.panY + dy }); };
 
   function sample(e: PointerEvent): Sample {
     const p = scene.toWorld(e.clientX, e.clientY);
@@ -99,7 +99,7 @@ export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivEleme
     cancelAnimationFrame(inertia);
     const s = getState();
     if (s.playing) s.set({ playing: false });
-    if (e.pointerType === 'pen') lastPen = performance.now();
+    if (e.pointerType === 'pen') penSeen = true;
     if (e.pointerType === 'touch') {
       touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (touches.size >= 2) {
@@ -109,7 +109,7 @@ export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivEleme
         return;
       }
       // Palm rejection: once a pen is in use, a resting hand must not draw.
-      if (performance.now() - lastPen < 5000 && !['hand', 'zoom', 'select'].includes(s.tool)) return;
+      if (penSeen && !['hand', 'zoom', 'select'].includes(s.tool)) return;
     }
     if (document.activeElement instanceof HTMLElement && document.activeElement !== document.body) document.activeElement.blur();
     const handOn = s.tool === 'hand' || keyState.space || e.button === 1;
@@ -134,6 +134,7 @@ export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivEleme
         case 'bucket': void bucketAt(p.x, p.y, e.clientX, e.clientY); break;
         case 'eyedropper': void eyedropperAt(p.x, p.y); break;
         case 'zoom': {
+          scene.touched = true;
           const l = scene.toLocal(e.clientX, e.clientY);
           s.zoomTo(s.zoom * (e.altKey ? 1 / (1 + s.settings.zoom.step) : 1 + s.settings.zoom.step), l.x, l.y);
           break;
@@ -152,6 +153,7 @@ export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivEleme
         const [a, b] = [...touches.values()];
         const dist = Math.hypot(a.x - b.x, a.y - b.y), cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
         const s = getState();
+        scene.touched = true;
         const l = scene.toLocal(cx, cy);
         s.zoomTo(s.zoom * (dist / (pinch.dist || 1)), l.x, l.y);
         panBy(cx - pinch.cx, cy - pinch.cy);
@@ -232,6 +234,7 @@ export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivEleme
 
   function wheel(e: WheelEvent) {
     e.preventDefault();
+    scene.touched = true;
     const s = getState();
     const l = scene.toLocal(e.clientX, e.clientY);
     s.zoomTo(s.zoom * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), l.x, l.y);

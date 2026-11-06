@@ -50,7 +50,7 @@ function drawGrid(c: HTMLCanvasElement) {
       const items = getCel(doc, 0, l.id);
       const th = items.length ? thumbFor(items, doc) : null;
       if (th) x.drawImage(th, left + 8, y + 5, (ROW - 11) * (th.width / th.height), ROW - 11);
-      x.fillStyle = COLORS.text; x.font = '13px "Baloo 2", sans-serif';
+      x.fillStyle = COLORS.text; x.font = '14px "Baloo 2", sans-serif';
       x.fillText('📌 On every frame', left + 8 + (th ? 72 : 0), y + 27);
       return;
     }
@@ -101,7 +101,7 @@ function drawGrid(c: HTMLCanvasElement) {
     x.fillStyle = 'rgba(0,0,0,.35)';
     if (clip.fadeIn) { x.beginPath(); x.moveTo(X, y + 3); x.lineTo(X + clip.fadeIn * pxPerSec, y + 3); x.lineTo(X, y + ROW - 4); x.fill(); }
     if (clip.fadeOut) { x.beginPath(); x.moveTo(X + w, y + 3); x.lineTo(X + w - clip.fadeOut * pxPerSec, y + 3); x.lineTo(X + w, y + ROW - 4); x.fill(); }
-    x.fillStyle = '#fff'; x.font = '12px "Baloo 2", sans-serif'; x.fillText(clip.name, X + 12, y + 16, Math.max(0, w - 20));
+    x.fillStyle = '#fff'; x.font = '14px "Baloo 2", sans-serif'; x.fillText(clip.name, X + 12, y + 16, Math.max(0, w - 20));
     x.restore();
     if (clip.id === s.selectedClipId) {
       x.strokeStyle = COLORS.clipSel; x.lineWidth = 2;
@@ -115,7 +115,7 @@ function drawGrid(c: HTMLCanvasElement) {
   // ruler
   x.fillStyle = '#0f1730'; x.fillRect(0, 0, W, RULER);
   const every = [1, 2, 5, 10, 20, 50, 100, 200, 500].find((v) => v * cw >= 44) ?? 1000;
-  x.fillStyle = COLORS.text; x.font = '12px "JetBrains Mono", monospace'; x.strokeStyle = COLORS.line;
+  x.fillStyle = COLORS.text; x.font = '14px "JetBrains Mono", monospace'; x.strokeStyle = COLORS.line;
   for (let i = first - (first % every); i <= last; i += every) {
     const X = fx(i);
     x.fillText(String(i + 1), X + 3, 16);
@@ -126,7 +126,7 @@ function drawGrid(c: HTMLCanvasElement) {
   x.fillStyle = 'rgba(233,69,96,.16)'; x.fillRect(px, RULER, cw, H - RULER);
   x.fillStyle = COLORS.play; x.fillRect(px + Math.min(cw, 2) / 2, 0, 2, H);
   x.beginPath(); x.roundRect(px - 2, 2, Math.max(cw + 4, 22), 20, 7); x.fill();
-  x.fillStyle = '#fff'; x.font = '12px "JetBrains Mono", monospace'; x.fillText(String(frameIndex + 1), px + 3, 17);
+  x.fillStyle = '#fff'; x.font = '14px "JetBrains Mono", monospace'; x.fillText(String(frameIndex + 1), px + 3, 17);
   if (view.reorderTo >= 0) { x.fillStyle = COLORS.on; x.fillRect(fx(view.reorderTo) - 2, RULER, 4, H); }
 }
 

@@ -4,6 +4,9 @@ import { bitmaps } from './bitmaps';
 import { allBitmapIds, migrateDoc } from './doc';
 import { addAudio, clearAudio, getAudio } from '../audio/assets';
 import { getState } from './store';
+import { clearAutosave } from './idb';
+import { sceneRef } from '../render/scene';
+import { playChime } from '../audio/sfx';
 
 const zipLib = () => import('jszip').then((m) => m.default);
 
@@ -78,12 +81,10 @@ export async function saveProject(saveAs = false): Promise<void> {
   getState().set({ savedRevision: s.revision });
   done();
 }
-function done() { getState().toast('Saved! 🎉'); chime(); }
+function done() { getState().toast('Saved! 🎉'); chime(); void clearAutosave().catch(() => {}); }
 
 /** A tiny success sound (spec §8.0). */
-export function chime(): void {
-  void import('../audio/sfx').then((m) => m.playChime());
-}
+export const chime = playChime;
 
 export async function openProject(file: File): Promise<void> {
   const s = getState();
@@ -91,7 +92,7 @@ export async function openProject(file: File): Promise<void> {
     const doc = await unpackProject(file);
     forgetHandle();
     s.replaceDoc(doc, file.name.replace(/\.kanvaso$/, ''));
-    (await import('../render/scene')).sceneRef.current?.fit();
+    sceneRef.current?.fit();
     s.toast('Project opened! 🎨');
   } catch (e) {
     console.warn(e);

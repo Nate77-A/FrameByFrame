@@ -64,7 +64,7 @@ function ShapeProps() {
 }
 function fontControls(v: Pick<TextItem, 'fontFamily' | 'fontSize' | 'bold' | 'italic' | 'underline' | 'strike' | 'align' | 'lineHeight' | 'letterSpacing' | 'outline' | 'outlineColor' | 'outlineWidth' | 'background'>, up: (p: Partial<TextItem>) => void) {
   return (<>
-    <div className="field"><label>Font</label>
+    <div className="field" data-tooltip="Font: the style of your letters!"><label>Font</label>
       <select className="input" aria-label="Font" value={v.fontFamily} onChange={(e) => up({ fontFamily: e.target.value })}>{FONTS.map((f) => <option key={f}>{f}</option>)}</select></div>
     <Slider label="Size" min={8} max={300} value={v.fontSize} onChange={(fontSize) => up({ fontSize })} format={(n) => `${n} pt`} />
     <div className="row field">

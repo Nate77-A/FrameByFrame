@@ -23,6 +23,8 @@ function checker(): HTMLCanvasElement {
   return c;
 }
 
+Konva.showWarnings = false;
+
 export class Scene {
   stage: Konva.Stage;
   private paper = new Konva.Rect({ listening: false, shadowColor: '#000', shadowBlur: 24, shadowOpacity: 0.45 });
@@ -41,6 +43,8 @@ export class Scene {
   private onionTimer: ReturnType<typeof setTimeout> | null = null;
   private onionKey = '';
   onTransformEnd: (() => void) | null = null;
+  /** Set once the user pans or zooms, so resizing stops refitting their view. */
+  touched = false;
 
   constructor(private container: HTMLDivElement) {
     this.stage = new Konva.Stage({ container, width: container.clientWidth || 800, height: container.clientHeight || 600 });
@@ -73,10 +77,17 @@ export class Scene {
 
   resize() {
     const r = this.container.getBoundingClientRect();
-    if (r.width && r.height) { this.stage.size({ width: r.width, height: r.height }); this.request(); }
+    if (!r.width || !r.height) return;
+    const { width: oldW, height: oldH } = this.stage.size();
+    this.stage.size({ width: r.width, height: r.height });
+    const s = getState();
+    if (!this.touched) this.fit();
+    else s.set({ panX: s.panX + (r.width - oldW) / 2, panY: s.panY + (r.height - oldH) / 2 });
+    this.request();
   }
   /** Centre the artboard, shrinking it to fit if needed. */
   fit() {
+    this.touched = false;
     const s = getState();
     const { width: vw, height: vh } = this.stage.size();
     const z = Math.min(1, Math.min((vw - 60) / s.doc.canvas.width, (vh - 60) / s.doc.canvas.height));
