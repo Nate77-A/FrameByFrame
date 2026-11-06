@@ -25,7 +25,7 @@ async function importWav(page: Page) {
   const chooser = page.waitForEvent('filechooser');
   await menu(page, 'File', /Import Audio/);
   await (await chooser).setFiles(path);
-  await page.waitForFunction(async () => { const { useStore } = await import('/src/core/store.ts'); return useStore.getState().doc.audioClips.length > 0; });
+  await expect.poll(() => st(page, '(s) => s.doc.audioClips.length')).toBe(1);
 }
 const pen = (page: Page, pts: { x: number; y: number; pressure?: number; type?: string; id?: number }[], kinds?: string[]) => page.evaluate(([pts, kinds]) => {
   const el = document.querySelector('[data-testid=stage]')!;
@@ -218,4 +218,19 @@ test('every control has a tooltip and an accessible name', async ({ page }) => {
   await page.getByRole('button', { name: 'File', exact: true }).click(); seen.push(...await scan()); await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Edit', exact: true }).click(); seen.push(...await scan());
   expect([...new Set(seen)]).toEqual([]);
+});
+
+test('record panel captures the microphone and adds a clip', async ({ page, browserName, context }) => {
+  test.skip(browserName !== 'chromium', 'a fake microphone is only available in Chromium');
+  await context.grantPermissions(['microphone']);
+  const errors = await open(page);
+  await page.getByRole('button', { name: /Record your own voice/ }).click();
+  await page.getByTestId('record').click();
+  await page.waitForTimeout(1200);
+  await page.getByRole('button', { name: /Press to stop/ }).click();
+  await page.getByRole('button', { name: /Put this at the playhead/ }).click();
+  await expect.poll(() => st(page, '(s) => s.doc.audioClips.length')).toBe(1);
+  const len = await st(page, '(s) => s.doc.audioClips[0].trimEnd') as number;
+  expect(len).toBeGreaterThan(0.5);
+  expect(errors).toEqual([]);
 });

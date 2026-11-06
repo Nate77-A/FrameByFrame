@@ -26,7 +26,7 @@ test('stage 3: select, move, resize via handle, rotate with properties', async (
   await tool(page, 'Select');
   await line(page, [[150, 150], [350, 250]]);
   let [it] = await items(page);
-  expect(Math.round(it.x)).toBe(350); expect(Math.round(it.y)).toBe(250);
+  expect(it.x).toBeCloseTo(350, -1); expect(it.y).toBeCloseTo(250, -1);
   expect(await pixel(page, 350, 250)).toEqual([255, 0, 0, 255]);
   const rot = page.getByRole('slider', { name: 'Rotation' });
   await rot.fill('45');

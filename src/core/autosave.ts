@@ -4,12 +4,13 @@ import { packProject, unpackProject } from './projectFile';
 import { tx } from './idb';
 import { sceneRef } from '../render/scene';
 
-interface Snapshot { blob: Blob; time: number; name: string }
+/** Bytes rather than a Blob: WebKit can refuse to store Blobs in IndexedDB. */
+interface Snapshot { bytes: ArrayBuffer; time: number; name: string }
 
 export async function autosaveNow(): Promise<void> {
   const s = getState();
-  const blob = await packProject(s.doc);
-  await tx('readwrite', (st) => st.put({ blob, time: Date.now(), name: s.fileName } satisfies Snapshot, 'latest'));
+  const bytes = await (await packProject(s.doc)).arrayBuffer();
+  await tx('readwrite', (st) => st.put({ bytes, time: Date.now(), name: s.fileName } satisfies Snapshot, 'latest'));
 }
 
 export function startAutosave(intervalMs = 30000): () => void {
@@ -31,12 +32,12 @@ export function startAutosave(intervalMs = 30000): () => void {
 export async function offerRestore(): Promise<void> {
   let snap: Snapshot | undefined;
   try { snap = await tx('readonly', (s) => s.get('latest')); } catch { return; }
-  if (!snap) return;
+  if (!snap?.bytes) return;
   const s = getState();
   const when = new Date(snap.time).toLocaleString();
   s.ask(`We found your drawing from ${when}. Bring it back?`, 'Yes, restore it!', async () => {
     try {
-      s.replaceDoc(await unpackProject(snap!.blob), snap!.name);
+      s.replaceDoc(await unpackProject(new Blob([snap!.bytes])), snap!.name);
       sceneRef.current?.fit();
     } catch { s.toast("Oops! That auto-save couldn't be opened. 🔄"); }
   });
