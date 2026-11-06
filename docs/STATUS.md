@@ -33,6 +33,6 @@ These need a real device or a person:
 
 - MP4 sound on Safari older than version 26 is left out, with a notice, because those versions cannot encode audio.
 - Guides can only be cleared all at once, by double-clicking a ruler.
-- A deep cut of the design: no marquee drag-select. Use Shift+click or Select All.
+- There is no drag-a-box selection. Use Shift+click or Select All.
 - The Shape tool has no rotation setting before drawing; rotate the shape after placing it.
 - `npm run lint` is a strict TypeScript check, not ESLint.

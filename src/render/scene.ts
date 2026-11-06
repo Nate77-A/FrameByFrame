@@ -90,9 +90,11 @@ export class Scene {
     this.touched = false;
     const s = getState();
     const { width: vw, height: vh } = this.stage.size();
-    const z = Math.min(1, Math.min((vw - 60) / s.doc.canvas.width, (vh - 60) / s.doc.canvas.height));
+    // Keep the artboard below the floating buttons so they never cover its corners.
+    const top = 58, bottom = 16;
+    const z = Math.min(1, Math.min((vw - 40) / s.doc.canvas.width, (vh - top - bottom) / s.doc.canvas.height));
     const zoom = Math.max(0.1, z);
-    s.set({ zoom, panX: (vw - s.doc.canvas.width * zoom) / 2, panY: (vh - s.doc.canvas.height * zoom) / 2 });
+    s.set({ zoom, panX: (vw - s.doc.canvas.width * zoom) / 2, panY: top + (vh - top - bottom - s.doc.canvas.height * zoom) / 2 });
   }
   toWorld(clientX: number, clientY: number) {
     const r = this.container.getBoundingClientRect();
