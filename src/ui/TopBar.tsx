@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { CircleHelp, Menu, Mic, Music, Redo2, Undo2 } from 'lucide-react';
 import { useStore, getState } from '../core/store';
 import { openProject, saveProject, forgetHandle } from '../core/projectFile';
-import { clearAutosave } from '../core/autosave';
+import { clearAutosave } from '../core/idb';
 import { bitmaps } from '../core/bitmaps';
 import { clearAudio } from '../audio/assets';
 import { newProject } from '../core/doc';

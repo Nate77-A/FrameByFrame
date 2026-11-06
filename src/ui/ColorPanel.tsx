@@ -70,7 +70,7 @@ function GradientEditor() {
         ))}
       </div>
       <div className="row">
-        <input className="color-dot" type="color" aria-label="Stop color" value={stop.color} onChange={(e) => put({ stops: g.stops.map((s, n) => (n === sel ? { ...s, color: e.target.value } : s)) })} />
+        <input className="color-dot" type="color" data-tooltip="Pick the color of this dot!" aria-label="Stop color" value={stop.color} onChange={(e) => put({ stops: g.stops.map((s, n) => (n === sel ? { ...s, color: e.target.value } : s)) })} />
         <button className="btn small" {...tip('Add another color!')} onClick={() => put({ stops: [...g.stops, { offset: 0.5, color: '#ffffff' }] })}><Plus size={18} /></button>
         <button className="btn small" disabled={g.stops.length < 3} {...tip('Remove this color')} onClick={() => { put({ stops: g.stops.filter((_, i) => i !== sel) }); setSel(0); }}><X size={18} /></button>
       </div>
@@ -95,7 +95,7 @@ export function ColorPanel() {
       <h3>🎨 Colors</h3>
       <div className="row" style={{ marginBottom: 8 }}>
         <div style={{ width: 54, height: 54, borderRadius: 14, border: '3px solid #fff', background: color }} aria-hidden />
-        <input className="input" style={{ flex: 1, fontFamily: 'var(--font-mono)' }} aria-label="Hex color" value={hex ?? color} onChange={(e) => { setHex(e.target.value); if (/^#[0-9a-f]{6}$/i.test(e.target.value)) set({ color: e.target.value.toLowerCase() }); }} onBlur={() => setHex(null)} />
+        <input className="input" style={{ flex: 1, fontFamily: 'var(--font-mono)' }} data-tooltip="Type a color code, like #ff0000!" aria-label="Hex color" value={hex ?? color} onChange={(e) => { setHex(e.target.value); if (/^#[0-9a-f]{6}$/i.test(e.target.value)) set({ color: e.target.value.toLowerCase() }); }} onBlur={() => setHex(null)} />
       </div>
       <Seg value={mode} options={[['solid', 'Solid'], ['gradient', 'Rainbow Ramp']]} onChange={(colorMode) => set({ colorMode })} />
       {mode === 'solid' ? (
@@ -108,7 +108,7 @@ export function ColorPanel() {
           <Slider label="Green" min={0} max={255} value={g} onChange={(v) => set({ color: rgbToHex(r, v, b) })} />
           <Slider label="Blue" min={0} max={255} value={b} onChange={(v) => set({ color: rgbToHex(r, g, v) })} />
           <div className="swatch-grid" role="group" aria-label="Color swatches">
-            {KIDS_PALETTE.map((c) => <button key={c} aria-label={c} style={{ background: c }} onClick={() => set({ color: c })} />)}
+            {KIDS_PALETTE.map((c) => <button key={c} aria-label={c} data-tooltip={`Paint with ${c}`} style={{ background: c }} onClick={() => set({ color: c })} />)}
           </div>
         </>
       ) : <GradientEditor />}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Layers, Magnet, Grid3x3, Ruler } from 'lucide-react';
-import { useStore, currentItems, getState } from '../core/store';
+import { useStore, currentItems } from '../core/store';
 import type { TextItem } from '../core/types';
 import { Scene, sceneRef } from '../render/scene';
 import { applyText, attachInput } from '../tools/input';
@@ -99,9 +99,8 @@ export function CanvasArea() {
       <div ref={host} className="stage-host" data-testid="stage" style={rulers ? { inset: '20px 0 0 20px' } : undefined} aria-label="Drawing canvas" role="application" />
       <div ref={ring} style={{ position: 'absolute', display: 'none', borderRadius: '50%', border: '1.5px solid rgba(0,0,0,.7)', boxShadow: '0 0 0 1px rgba(255,255,255,.8)', pointerEvents: 'none', zIndex: 4 }} />
       {editItem?.type === 'text' && <TextEditor item={editItem} onDone={() => setEditing(null)} />}
-      <div className="float-tl"><CanvasToggles /></div>
-      <div className="float-tr"><SizePill /><ZoomPill /></div>
+      <div className="float-tl" style={rulers ? { top: 30, left: 30 } : undefined}><CanvasToggles /></div>
+      <div className="float-tr" style={rulers ? { top: 30 } : undefined}><SizePill /><ZoomPill /></div>
     </div>
   );
 }
-export { getState };

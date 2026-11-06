@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Clapperboard, SlidersHorizontal } from 'lucide-react';
-import { useStore, getState } from '../core/store';
+import { COMPACT_QUERY, useStore, getState } from '../core/store';
 import { offerRestore, startAutosave } from '../core/autosave';
 import { openProject, saveProject } from '../core/projectFile';
 import { installPlayback } from '../audio/engine';
@@ -97,7 +97,7 @@ function useDrop() {
 }
 function useCompact() {
   useEffect(() => {
-    const q = matchMedia('(max-width: 900px), (orientation: portrait) and (max-width: 1024px)');
+    const q = matchMedia(COMPACT_QUERY);
     const apply = () => getState().set({ compact: q.matches });
     apply();
     q.addEventListener('change', apply);
@@ -122,12 +122,12 @@ export function App() {
     <Boundary>
       <div className={`app ${compact ? 'compact' : ''}`}>
         <TopBar />
-        <div className="main">
+        <main className="main">
           {panels.tools && !compact && <Toolbar />}
           <CanvasArea />
           {panels.properties && !compact && <aside className="props" aria-label="Properties"><PropertiesBody /></aside>}
           {compact && panels.tools && <Toolbar />}
-        </div>
+        </main>
         {compact && <div className="bottom-tabs">
           <button className={`btn small ${sheet === 'properties' ? 'on' : ''}`} data-testid="tab-properties" onClick={() => set({ sheet: sheet === 'properties' ? 'none' : 'properties' })}><SlidersHorizontal size={18} /> Settings</button>
           <button className={`btn small ${sheet === 'timeline' ? 'on' : ''}`} data-testid="tab-timeline" onClick={() => set({ sheet: sheet === 'timeline' ? 'none' : 'timeline' })}><Clapperboard size={18} /> Timeline</button>

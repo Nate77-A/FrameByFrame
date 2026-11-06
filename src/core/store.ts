@@ -104,6 +104,7 @@ export function cloneItems(items: Item[]): Item[] {
 
 export const blendToComposite = (b: BlendMode): GlobalCompositeOperation => (b === 'normal' ? 'source-over' : b);
 
+export const COMPACT_QUERY = '(max-width: 900px), (orientation: portrait) and (max-width: 1024px)';
 const initialDoc = newProject();
 
 export const useStore = create<Store>((set, get) => {
@@ -135,7 +136,7 @@ export const useStore = create<Store>((set, get) => {
     grid: { show: false, size: 32, snap: false, snapObjects: false, rulers: false },
     panels: { tools: true, properties: true, timeline: true, status: true },
     sheet: 'none', modal: null, exportFormat: 'png',
-    toasts: [], confirm: null, compact: false,
+    toasts: [], confirm: null, compact: typeof matchMedia === 'function' && matchMedia(COMPACT_QUERY).matches,
 
     commit(label, recipe, opts) {
       const s = get();
