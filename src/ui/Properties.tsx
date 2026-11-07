@@ -1,9 +1,11 @@
 /** Context-sensitive properties panel (spec §4.4). */
-import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowDownToLine, ArrowUp, ArrowUpToLine, Bold, FlipHorizontal, FlipVertical, Italic, Strikethrough, Trash2, Underline } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowDownToLine, ArrowUp, ArrowUpToLine, Bold, Combine, FlipHorizontal, FlipVertical, Italic, Strikethrough, Trash2, Underline } from 'lucide-react';
 import { currentItems, useStore, type BrushType, type PencilStyle } from '../core/store';
 import type { AudioClip, ImageItem, Item, ShapeItem, ShapeKind, TextItem } from '../core/types';
 import { getAudio } from '../audio/assets';
-import { itemBounds } from '../tools/bounds';
+import { boxPoints, itemBounds, withAnchor } from '../tools/bounds';
+import { contentBox, pivotPatch } from '../render/content';
+import { mergeSelection } from '../tools/actions';
 import { measureText } from '../render/nodes';
 import { ColorField, Num, Percent, Seg, Slider, Toggle } from './controls';
 import { ColorPanel } from './ColorPanel';
@@ -120,33 +122,54 @@ function ObjectProps({ items }: { items: Item[] }) {
   const update = useStore((s) => s.updateItems);
   const reorder = useStore((s) => s.reorderSelection);
   const remove = useStore((s) => s.deleteSelection);
+  const anchorMode = useStore((s) => s.anchorMode);
   const ids = items.map((i) => i.id);
   const one = items.length === 1 ? items[0] : null;
-  const box = one ? itemBounds({ ...one, rotation: 0 }) : null;
+  const content = one ? contentBox(one) : null;
+  const box = one ? itemBounds({ ...one, rotation: 0 }, content!) : null;
   const up = (patch: Partial<Item>, key: string) => update(ids, patch, 'Change object', `prop-${ids[0]}-${key}`);
+  // Turning, flipping and resizing happen around the anchor, so a drawing needs one first.
+  const pivot = (patch: Partial<Item>, key: string) => update(ids, (i) => ({ ...pivotPatch(i), ...patch }), 'Change object', `prop-${ids[0]}-${key}`);
   const title = !one ? `${items.length} things` : one.type === 'shape' ? '⭐ Shape' : one.type === 'text' ? '🔤 Text' : one.type === 'image' ? '🖼️ Picture' : '✏️ Drawing';
   return (<><h3>{title}</h3>
+    {one && anchorMode && <AnchorPicker item={one} />}
     {one && box && <div className="grid2">
-      <Num label="X" value={box.x} onChange={(v) => up({ x: v + box.width / 2 }, 'x')} />
-      <Num label="Y" value={box.y} onChange={(v) => up({ y: v + box.height / 2 }, 'y')} />
-      <Num label="Width" value={box.width} min={1} onChange={(v) => up({ scaleX: Math.sign(one.scaleX) * (v / one.width) }, 'w')} />
-      <Num label="Height" value={box.height} min={1} onChange={(v) => up({ scaleY: Math.sign(one.scaleY) * (v / one.height) }, 'h')} />
+      <Num label="X" value={box.x} onChange={(v) => up({ x: one.x + v - box.x }, 'x')} />
+      <Num label="Y" value={box.y} onChange={(v) => up({ y: one.y + v - box.y }, 'y')} />
+      <Num label="Width" value={box.width} min={1} onChange={(v) => pivot({ scaleX: Math.sign(one.scaleX) * (v / content!.width) }, 'w')} />
+      <Num label="Height" value={box.height} min={1} onChange={(v) => pivot({ scaleY: Math.sign(one.scaleY) * (v / content!.height) }, 'h')} />
     </div>}
-    {one && <Slider label="Rotation" min={-180} max={180} value={Math.round(one.rotation)} onChange={(rotation) => up({ rotation }, 'rot')} format={(v) => `${v}°`} />}
+    {one && <Slider label="Rotation" min={-180} max={180} value={Math.round(one.rotation)} onChange={(rotation) => pivot({ rotation }, 'rot')} format={(v) => `${v}°`} />}
     {one && <Percent label="Opacity" value={one.opacity} onChange={(opacity) => up({ opacity }, 'op')} />}
     <div className="row field">
-      <button className="btn small" {...tip('Flip side to side!')} onClick={() => update(ids, (i) => ({ scaleX: -i.scaleX }), 'Flip')}><FlipHorizontal size={18} /></button>
-      <button className="btn small" {...tip('Flip upside down!')} onClick={() => update(ids, (i) => ({ scaleY: -i.scaleY }), 'Flip')}><FlipVertical size={18} /></button>
+      <button className="btn small" {...tip('Flip side to side!')} onClick={() => update(ids, (i) => ({ ...pivotPatch(i), scaleX: -i.scaleX }), 'Flip')}><FlipHorizontal size={18} /></button>
+      <button className="btn small" {...tip('Flip upside down!')} onClick={() => update(ids, (i) => ({ ...pivotPatch(i), scaleY: -i.scaleY }), 'Flip')}><FlipVertical size={18} /></button>
       <button className="btn small" {...tip('Bring to the very front')} onClick={() => reorder('front')}><ArrowUpToLine size={18} /></button>
       <button className="btn small" {...tip('Bring forward one step')} onClick={() => reorder('forward')}><ArrowUp size={18} /></button>
       <button className="btn small" {...tip('Send back one step')} onClick={() => reorder('backward')}><ArrowDown size={18} /></button>
       <button className="btn small" {...tip('Send to the very back')} onClick={() => reorder('back')}><ArrowDownToLine size={18} /></button>
       <button className="btn small" {...tip('Delete this!')} onClick={remove}><Trash2 size={18} /></button>
     </div>
+    {items.length > 1 && <button className="btn primary field" style={{ width: '100%' }} data-testid="merge" {...tip('Merge: stick these together into one drawing! Words and shapes stop being editable. 🧩')} onClick={() => void mergeSelection()}><Combine size={18} /> Merge {items.length} objects</button>}
     {one?.type === 'shape' && <ShapeObject item={one} />}
     {one?.type === 'text' && <TextObject item={one} />}
     {one?.type === 'image' && <ImageObject item={one} />}
   </>);
+}
+const SPOTS = ['top left', 'top', 'top right', 'left', 'middle', 'right', 'bottom left', 'bottom', 'bottom right'];
+function AnchorPicker({ item }: { item: Item }) {
+  const update = useStore((s) => s.updateItems);
+  return (
+    <div className="field">
+      <div className="label">Anchor point</div>
+      <div className="anchor-grid" role="group" aria-label="Anchor point">
+        {boxPoints(contentBox(item)).map((p, i) => (
+          <button key={SPOTS[i]} aria-label={`Anchor ${SPOTS[i]}`} data-tooltip={`Turn from the ${SPOTS[i]}! 🎯`}
+            onClick={() => update([item.id], withAnchor(item, p) as Partial<Item>, 'Move anchor')} />
+        ))}
+      </div>
+    </div>
+  );
 }
 function ShapeObject({ item }: { item: ShapeItem }) {
   const update = useStore((s) => s.updateItems);

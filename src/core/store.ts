@@ -63,6 +63,7 @@ interface State {
   sheet: 'none' | 'properties' | 'timeline';
   modal: ModalKind; exportFormat: 'png' | 'mp4' | 'gif';
   toasts: Toast[]; confirm: Confirm | null; compact: boolean;
+  anchorMode: boolean; orderOpen: boolean;
 }
 
 interface Actions {
@@ -84,6 +85,7 @@ interface Actions {
   updateItems(ids: string[], patch: Partial<Item> | ((i: Item) => Partial<Item>), label?: string, key?: string): void;
   deleteSelection(): void; reorderSelection(how: 'front' | 'forward' | 'backward' | 'back'): void;
   addItem(item: Item, layerId?: string): void;
+  moveItem(from: number, to: number): void;
 
   addClip(c: Omit<AudioClip, 'id' | 'track'>): void;
   updateClip(id: string, patch: Partial<AudioClip>, key?: string): void; deleteClip(id: string): void;
@@ -136,6 +138,7 @@ export const useStore = create<Store>((set, get) => {
     grid: { show: false, size: 32, snap: false, snapObjects: false, rulers: false },
     panels: { tools: true, properties: true, timeline: true, status: true },
     sheet: 'none', modal: null, exportFormat: 'png',
+    anchorMode: false, orderOpen: false,
     toasts: [], confirm: null, compact: typeof matchMedia === 'function' && matchMedia(COMPACT_QUERY).matches,
 
     commit(label, recipe, opts) {
@@ -300,6 +303,15 @@ export const useStore = create<Store>((set, get) => {
             if (j >= 0 && j < list.length) { const [m] = list.splice(i, 1); list.splice(j, 0, m); }
           }
         }
+      });
+    },
+    moveItem(from, to) {
+      const s = get();
+      if (from === to) return;
+      get().commit('Change order', (d) => {
+        const list = celDraft(d, s.frameIndex, s.activeLayerId);
+        const [m] = list.splice(from, 1);
+        list.splice(to, 0, m);
       });
     },
     addItem(item, layerId) {

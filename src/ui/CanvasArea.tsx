@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Layers, Magnet, Grid3x3, Ruler } from 'lucide-react';
+import { Layers, LocateFixed, Magnet, Grid3x3, Ruler } from 'lucide-react';
 import { useStore, currentItems } from '../core/store';
 import type { TextItem } from '../core/types';
 import { Scene, sceneRef } from '../render/scene';
 import { applyText, attachInput } from '../tools/input';
+import { itemBounds } from '../tools/bounds';
 import { Toggle } from './controls';
 import { tip } from './Tooltip';
 import { Rulers } from './Rulers';
@@ -56,12 +57,14 @@ function SizePill() {
 function CanvasToggles() {
   const grid = useStore((s) => s.grid); const set = useStore((s) => s.set);
   const onion = useStore((s) => s.onion);
+  const anchor = useStore((s) => s.anchorMode);
   const g = (p: Partial<typeof grid>) => set({ grid: { ...grid, ...p } });
   return (<>
     <Toggle label={<Grid3x3 size={18} />} on={grid.show} onChange={(show) => g({ show })} help="Show a helpful grid! ▦" />
     <Toggle label={<Ruler size={18} />} on={grid.rulers} onChange={(rulers) => g({ rulers })} help="Rulers: drag from them to add guide lines! 📏" />
     <Toggle label={<Magnet size={18} />} on={grid.snap || grid.snapObjects} onChange={(on) => g(on ? (grid.show ? { snap: true } : { snapObjects: true }) : { snap: false, snapObjects: false })} help="Snap: things jump neatly to the grid and to each other! 🧲" />
     <Toggle label={<Layers size={18} />} on={onion.on} onChange={(on) => set({ onion: { ...onion, on } })} help="Onion skin: see the frames before and after, like tracing paper! 🧅" />
+    <Toggle label={<LocateFixed size={18} />} on={anchor} onChange={(on) => set({ anchorMode: on, ...(on ? { tool: 'select' as const } : {}) })} help="Anchor point: drag the red target to choose where an object turns from! 🎯" />
   </>);
 }
 function TextEditor({ item, onDone }: { item: TextItem; onDone(): void }) {
@@ -69,7 +72,8 @@ function TextEditor({ item, onDone }: { item: TextItem; onDone(): void }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   useEffect(() => { ref.current?.focus(); ref.current?.select(); }, []);
   const k = zoom * Math.abs(item.scaleY);
-  const left = panX + (item.x - (item.width * Math.abs(item.scaleX)) / 2) * zoom, top = panY + (item.y - (item.height * Math.abs(item.scaleY)) / 2) * zoom;
+  const box = itemBounds({ ...item, rotation: 0 });
+  const left = panX + box.x * zoom, top = panY + box.y * zoom;
   return <textarea ref={ref} className="text-editor" aria-label="Type your text" defaultValue={item.text}
     style={{ left, top, width: Math.max(160, item.width + 60), height: item.height + item.fontSize, fontFamily: item.fontFamily, fontSize: item.fontSize, lineHeight: item.lineHeight, color: item.color, transform: `scale(${k})`, fontWeight: item.bold ? 700 : 400 }}
     onBlur={(e) => { applyText(item.id, e.target.value); onDone(); }}

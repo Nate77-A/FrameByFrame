@@ -19,7 +19,7 @@ function offscreen(w: number, h: number) {
 }
 
 const isPlainRaster = (i: Item) =>
-  i.type === 'raster' && !i.rotation && i.scaleX === 1 && i.scaleY === 1 && i.x === i.width / 2 && i.y === i.height / 2;
+  i.type === 'raster' && !i.anchor && !i.rotation && i.scaleX === 1 && i.scaleY === 1 && i.x === i.width / 2 && i.y === i.height / 2;
 
 /** Draw a list of items onto ctx at the given scale. Bitmaps must already be decoded. */
 export function drawItems(ctx: CanvasRenderingContext2D, items: Item[], artW: number, artH: number, scale: number): void {
@@ -92,6 +92,16 @@ export async function renderFrame(doc: ProjectDoc, frame: number, target: HTMLCa
   }
   ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = 'source-over';
+}
+
+/** Flatten items into a canvas covering exactly this box, which may reach beyond the artboard. */
+export function flattenRegion(items: Item[], box: { x: number; y: number; width: number; height: number }, scale = 1): HTMLCanvasElement {
+  const { layer } = offscreen(16, 16);
+  layer.destroyChildren();
+  items.forEach((i) => layer.add(createNode(i) as Konva.Shape));
+  const c = layer.toCanvas({ x: box.x, y: box.y, width: box.width, height: box.height, pixelRatio: scale });
+  layer.destroyChildren();
+  return c;
 }
 
 /** Flatten items into a fresh artboard-sized canvas (used when the eraser touches an object). */

@@ -7,13 +7,16 @@ import type { Scene } from '../render/scene';
 import { measureText } from '../render/nodes';
 import { Stroke, type Sample } from './brush';
 import { bucketAt, canEditLayer, eyedropperAt, shapeItem, textItem } from './actions';
-import { gridLines, itemBounds, snapAxis, unionBox, type Box } from './bounds';
+import { boxPoints, gridLines, snapAxis, toLocal, toWorld, unionBox, withAnchor, type Box } from './bounds';
+import { contentBox, pivotPatch, visualBounds } from '../render/content';
 
 export const keyState = { space: false, spacePanned: false };
 type Drag =
   | { kind: 'stroke'; stroke: Stroke }
   | { kind: 'pan'; x: number; y: number; vx: number; vy: number; t: number }
   | { kind: 'shape'; x0: number; y0: number; item: ShapeItem | null }
+  | { kind: 'rotate'; item: Item; pre: Partial<Item>; pivot: { x: number; y: number }; start: number; rot: number }
+  | { kind: 'anchor'; item: Item; pt: { x: number; y: number }; snaps: { x: number; y: number }[] }
   | { kind: 'move'; ids: string[]; start: { x: number; y: number }; items: Item[]; box: Box; dx: number; dy: number; moved: boolean; targetsX: number[]; targetsY: number[] };
 
 const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -67,13 +70,49 @@ export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivEleme
     const list = getCel(s.doc, s.frameIndex, hit.layerId);
     const items = list.filter((i) => sel.includes(i.id));
     if (!items.length) return;
-    const others = list.filter((i) => !sel.includes(i.id)).map(itemBounds);
+    const others = list.filter((i) => !sel.includes(i.id)).map(visualBounds);
     const { width: W, height: H } = s.doc.canvas;
     drag = {
-      kind: 'move', ids: sel, start: scene.toWorld(e.clientX, e.clientY), items, box: unionBox(items.map(itemBounds)), dx: 0, dy: 0, moved: false,
+      kind: 'move', ids: sel, start: scene.toWorld(e.clientX, e.clientY), items, box: unionBox(items.map(visualBounds)), dx: 0, dy: 0, moved: false,
       targetsX: [0, W / 2, W, ...s.doc.guides.v, ...others.flatMap((b) => [b.x, b.x + b.width / 2, b.x + b.width])],
       targetsY: [0, H / 2, H, ...s.doc.guides.h, ...others.flatMap((b) => [b.y, b.y + b.height / 2, b.y + b.height])],
     };
+  }
+
+  /**
+   * Runs before Konva sees the press. Konva's own rotate handle always turns around the
+   * selection box's centre, so turning a single object is done here, around its anchor.
+   */
+  function grab(e: PointerEvent) {
+    const s = getState();
+    const item = scene.liveSelected();
+    if (!item || s.playing || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const p = scene.toWorld(e.clientX, e.clientY);
+    const pivot = scene.anchorWorld(item);
+    let next: Drag | null = null;
+    if (s.anchorMode && Math.hypot(p.x - pivot.x, p.y - pivot.y) * s.zoom < 22) {
+      next = { kind: 'anchor', item, pt: pivot, snaps: boxPoints(contentBox(item)).map((b) => toWorld(item, b)) };
+    } else if (scene.handleName(e.clientX, e.clientY).includes('rotater')) {
+      const pre = pivotPatch(item);
+      const node = scene.findNode(item.id)!;
+      if (pre.anchor) { node.offset(pre.anchor); node.position(pivot); }
+      next = { kind: 'rotate', item, pre, pivot, start: Math.atan2(p.y - pivot.y, p.x - pivot.x), rot: item.rotation };
+    }
+    if (!next) return;
+    e.stopPropagation();
+    drag = next; dragId = e.pointerId;
+    try { el.setPointerCapture(e.pointerId); } catch { /* synthetic events */ }
+  }
+
+  function turn(e: PointerEvent, d: Extract<Drag, { kind: 'rotate' }>) {
+    const p = scene.toWorld(e.clientX, e.clientY);
+    let r = d.item.rotation + ((Math.atan2(p.y - d.pivot.y, p.x - d.pivot.x) - d.start) * 180) / Math.PI;
+    if (e.shiftKey) r = Math.round(r / 15) * 15;
+    else { const near = Math.round(r / 45) * 45; if (Math.abs(near - r) < 3) r = near; }
+    d.rot = ((r + 540) % 360) - 180 || 0;
+    scene.findNode(d.item.id)?.rotation(d.rot);
+    scene.transformer.forceUpdate();
+    scene.stage.batchDraw();
   }
 
   function moveSelection(e: PointerEvent, d: Extract<Drag, { kind: 'move' }>) {
@@ -192,6 +231,15 @@ export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivEleme
         break;
       }
       case 'move': moveSelection(e, drag); break;
+      case 'rotate': turn(e, drag); break;
+      case 'anchor': {
+        const p = scene.toWorld(e.clientX, e.clientY);
+        // Corners, edges and centre are sticky, so the usual spots are easy to hit.
+        const near = drag.snaps.find((q) => Math.hypot(q.x - p.x, q.y - p.y) * s.zoom < 10);
+        drag.pt = near ?? p;
+        scene.placeMarker(drag.pt);
+        break;
+      }
     }
   }
 
@@ -221,6 +269,12 @@ export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivEleme
         const item = d.item ?? shapeItem(d.x0 - 60, d.y0 - 60, d.x0 + 60, d.y0 + 60, false);
         scene.setGhost(null);
         s.addItem(item);
+        break;
+      }
+      case 'rotate': s.updateItems([d.item.id], { ...d.pre, rotation: d.rot } as Partial<Item>, 'Rotate'); break;
+      case 'anchor': {
+        const anchor = toLocal(d.item, d.pt);
+        s.updateItems([d.item.id], withAnchor(d.item, anchor) as Partial<Item>, 'Move anchor');
         break;
       }
       case 'move': {
@@ -263,6 +317,11 @@ export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivEleme
     });
   };
 
+  // Konva's handles also start on these, so keep them away while we own the gesture.
+  const shield = (e: Event) => { if (drag?.kind === 'rotate' || drag?.kind === 'anchor') e.stopPropagation(); };
+  el.addEventListener('mousedown', shield, true);
+  el.addEventListener('touchstart', shield, true);
+  el.addEventListener('pointerdown', grab, true);
   el.addEventListener('pointerdown', down);
   el.addEventListener('pointermove', move);
   el.addEventListener('pointerup', up);
@@ -271,6 +330,9 @@ export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivEleme
   el.addEventListener('wheel', wheel, { passive: false });
   el.addEventListener('contextmenu', (e) => e.preventDefault());
   return () => {
+    el.removeEventListener('mousedown', shield, true);
+    el.removeEventListener('touchstart', shield, true);
+    el.removeEventListener('pointerdown', grab, true);
     el.removeEventListener('pointerdown', down);
     el.removeEventListener('pointermove', move);
     el.removeEventListener('pointerup', up);

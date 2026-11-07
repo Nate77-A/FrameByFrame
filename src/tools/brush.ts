@@ -2,7 +2,7 @@
 import type { Gradient, Item, RasterItem } from '../core/types';
 import { bitmaps, capturePatch, ctx2d, finishPatch, applyPatch, makeCanvas, type Rect } from '../core/bitmaps';
 import { celDraft, getCel, uid } from '../core/doc';
-import { blendToComposite, getState, type Settings } from '../core/store';
+import { blendToComposite, getState, useStore, type Settings } from '../core/store';
 import type { HistoryPatch } from '../core/history';
 import { rasterizeItems } from '../render/compositor';
 import { sceneRef } from '../render/scene';
@@ -225,9 +225,17 @@ export class Stroke {
   }
 }
 
+/**
+ * Strokes build up one drawing until the Select tool is picked. After that, the next
+ * stroke starts a new object, so a child can move, order and merge their drawings.
+ */
+let paintRound = 0;
+const paintedIn = new Map<string, number>();
+useStore.subscribe((s, p) => { if (s.tool === 'select' && p.tool !== 'select') paintRound++; });
+
 /** Can this item be painted straight into? */
 export const paintable = (i: Item | undefined, w: number, h: number): i is RasterItem =>
-  !!i && i.type === 'raster' && !i.rotation && i.scaleX === 1 && i.scaleY === 1 && i.opacity === 1
+  !!i && i.type === 'raster' && !i.anchor && !i.rotation && i.scaleX === 1 && i.scaleY === 1 && i.opacity === 1
   && i.width === w && i.height === h && i.x === w / 2 && i.y === h / 2;
 
 export const makeRaster = (bitmap: string, w: number, h: number): RasterItem => ({
@@ -240,7 +248,7 @@ export function paintOnTop(src: HTMLCanvasElement, r: Rect, opacity: number, op:
   const { width: w, height: h } = s.doc.canvas;
   const cel = getCel(s.doc, s.frameIndex, s.activeLayerId);
   const top = cel.at(-1);
-  const reuse = paintable(top, w, h) ? top : null;
+  const reuse = paintable(top, w, h) && paintedIn.get(top.id) === paintRound ? top : null;
   const bitmap = reuse ? reuse.bitmap : bitmaps.create(w, h);
   const patch = capturePatch(bitmap, r);
   if (!patch) return;
@@ -253,10 +261,12 @@ export function paintOnTop(src: HTMLCanvasElement, r: Rect, opacity: number, op:
   bitmaps.markDirty(bitmap);
   const hp: HistoryPatch = { apply: (w2) => applyPatch(patch, w2) };
   const frame = s.frameIndex, layer = s.activeLayerId;
+  const fresh = reuse ? null : makeRaster(bitmap, w, h);
+  paintedIn.set(reuse ? reuse.id : fresh!.id, paintRound);
   s.commit(label, (d) => {
     const list = celDraft(d, frame, layer);
-    if (reuse) (list[list.length - 1] as RasterItem).rev++;
-    else list.push(makeRaster(bitmap, w, h));
+    if (fresh) list.push(fresh);
+    else (list[list.length - 1] as RasterItem).rev++;
   }, { patches: reuse ? [hp] : [] });
 }
 

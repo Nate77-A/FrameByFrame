@@ -2,13 +2,15 @@
 import type { Item, ShapeItem, TextItem } from '../core/types';
 import { LIMITS } from '../core/types';
 import { bitmaps, ctx2d, makeCanvas } from '../core/bitmaps';
-import { getCel, uid } from '../core/doc';
+import { bitmapIds, celDraft, getCel, uid } from '../core/doc';
 import { getState } from '../core/store';
-import { drawItems, prepareFrame, renderFrame } from '../render/compositor';
+import { drawItems, flattenRegion, prepareFrame, renderFrame } from '../render/compositor';
+import { visualBounds } from '../render/content';
 import { gradientCanvas, measureText } from '../render/nodes';
 import { sceneRef } from '../render/scene';
 import { dilate, floodMask } from './flood';
-import { paintOnTop } from './brush';
+import { makeRaster, paintOnTop } from './brush';
+import { unionBox } from './bounds';
 
 const transformDefaults = { rotation: 0, scaleX: 1, scaleY: 1, opacity: 1 };
 
@@ -92,6 +94,27 @@ export async function eyedropperAt(x: number, y: number) {
   if (!a) { s.toast('Nothing to pick there!'); return; }
   const to = (v: number) => Math.round(v / a).toString(16).padStart(2, '0');
   s.set({ color: `#${to(r)}${to(g)}${to(b)}`, colorMode: 'solid' });
+}
+
+/** Flatten the selected objects into one drawing, sitting where the top-most one was. */
+export async function mergeSelection() {
+  const s = getState();
+  if (!canEditLayer()) return;
+  const cel = getCel(s.doc, s.frameIndex, s.activeLayerId);
+  const picked = cel.filter((i) => s.selection.includes(i.id));
+  if (picked.length < 2) return;
+  await bitmaps.ensure(picked.flatMap((i) => bitmapIds([i])));
+  const u = unionBox(picked.map(visualBounds));
+  const x = Math.floor(u.x), y = Math.floor(u.y);
+  const w = Math.min(LIMITS.maxImageSide * 2, Math.ceil(u.x + u.width) - x), h = Math.min(LIMITS.maxImageSide * 2, Math.ceil(u.y + u.height) - y);
+  const flat = flattenRegion(picked, { x, y, width: w, height: h });
+  const merged = { ...makeRaster(bitmaps.fromCanvas(flat, w, h), w, h), x: x + w / 2, y: y + h / 2 };
+  const ids = new Set(picked.map((i) => i.id));
+  const top = cel.findLastIndex((i) => ids.has(i.id));
+  const next = cel.flatMap((i, n) => (n === top ? [merged] : ids.has(i.id) ? [] : [i]));
+  const frame = s.frameIndex, layer = s.activeLayerId;
+  s.commit('Merge', (d) => { const l = celDraft(d, frame, layer); l.splice(0, l.length, ...next); });
+  s.set({ selection: [merged.id] });
 }
 
 /** Add a picture to the active layer, shrinking anything huge (spec §4.3). */
