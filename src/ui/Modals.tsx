@@ -190,7 +190,7 @@ function About() {
 function Help() {
   const rows: [string, string][] = [['Space (tap)', 'Play or pause'], ['Space + drag', 'Slide the canvas'], [', and .', 'Back or forward one frame'], ['Ctrl/⌘ Z', 'Undo'], ['Ctrl/⌘ Shift Z', 'Redo'], ['V P B E U T G I H Z', 'Pick a tool'], ['C', 'Open colors'], ['D', 'Black and white colors'], ['X', 'Swap colors'], ['Delete', 'Delete what you selected'], ['Two fingers', 'Slide and zoom on a tablet']];
   return <Modal title="How it works" onClose={close}>
-    <ol style={{ paddingLeft: 22, lineHeight: 1.5 }}><li>Pick a tool on the left and draw!</li><li>Press <b>+ Frame</b> to make the next picture.</li><li>Turn on the onion 🧅 to see your last frame like tracing paper.</li><li>Press ▶️ to watch it move!</li><li>Use 📌 on a layer so a background stays on every frame.</li></ol>
+    <ol style={{ paddingLeft: 22, lineHeight: 1.5 }}><li>Pick a tool on the left and draw!</li><li>Press <b>+ Frame</b> to make the next picture.</li><li>Press Onion 🧅 and switch it on to see your last frame like tracing paper.</li><li>Press ▶️ to watch it move!</li><li>Use 📌 on a layer so a background stays on every frame.</li></ol>
     <table style={{ width: '100%', borderSpacing: '0 4px' }}><tbody>{rows.map(([k, v]) => <tr key={k}><td style={{ fontFamily: 'var(--font-mono)', fontSize: 14 }}>{k}</td><td>{v}</td></tr>)}</tbody></table>
     <div className="row" style={{ justifyContent: 'flex-end' }}><button className="btn primary" onClick={close}>Got it!</button></div>
   </Modal>;

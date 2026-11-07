@@ -254,3 +254,45 @@ test('saves as .franimator and still opens older .kanvaso projects', async ({ pa
   await expect.poll(() => count(page)).toBe(1);
   expect(await st(page, '(s) => s.fileName')).toMatch(/^old-\d+$/);
 });
+
+test('onion skin switches on and off from its popup', async ({ page }) => {
+  await open(page);
+  const ghosts = () => page.evaluate(() => (window as any).__scene.onion.getChildren().length);
+  await line(page, [[100, 100], [300, 100]]);
+  await page.getByTestId('add-frame').click();
+  await page.getByRole('button', { name: 'Onion: Off' }).click();
+  const sw = page.getByRole('switch', { name: 'Onion skin' });
+  await expect(sw).toHaveAttribute('aria-checked', 'false');
+  await expect(page.getByRole('slider', { name: 'Strength' })).toHaveCount(0);
+  await sw.click();
+  await expect(sw).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('button', { name: 'Onion: On' })).toBeVisible();
+  await expect.poll(ghosts).toBeGreaterThan(0);
+  await page.getByRole('slider', { name: 'Strength' }).fill('0.5');
+  await expect(sw).toHaveAttribute('aria-checked', 'true');
+  await sw.click();
+  await expect(sw).toHaveAttribute('aria-checked', 'false');
+  await expect.poll(ghosts).toBe(0);
+  // Turning it back on after changing a setting keeps that setting
+  await sw.click();
+  await expect.poll(ghosts).toBeGreaterThan(0);
+  expect(await st(page, '(s) => s.onion.opacity')).toBe(0.5);
+  // The popup leaves its button clickable, and closes with it or with a click elsewhere
+  await page.getByRole('button', { name: 'Onion: On' }).click();
+  await expect(sw).toHaveCount(0);
+  await page.getByRole('button', { name: 'Onion: On' }).click();
+  await expect(sw).toBeVisible();
+  const p = await point(page, 400, 300);
+  await page.mouse.click(p.x, p.y);
+  await expect(sw).toHaveCount(0);
+});
+
+test('timeline popups stay on screen in the iPad portrait overlay', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await open(page);
+  await page.getByTestId('tab-timeline').click();
+  await page.getByRole('button', { name: 'Onion: Off' }).click();
+  const box = await page.getByRole('switch', { name: 'Onion skin' }).boundingBox();
+  expect(box!.y).toBeGreaterThan(0);
+  expect(box!.x + box!.width).toBeLessThanOrEqual(768);
+});
