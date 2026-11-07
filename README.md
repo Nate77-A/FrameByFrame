@@ -35,6 +35,14 @@ npx playwright install chromium webkit
 
 The app needs no environment variables, so there is no `.env` file. `dist/` is a static site and can be hosted anywhere. Microphone recording and the service worker require HTTPS outside localhost.
 
+## Publishing on GitHub Pages
+
+The site is at **https://nate77-a.github.io/FrAnimator/** once deployed. Every push to `main` runs [the workflow](.github/workflows/deploy.yml): typecheck, unit tests and build must pass before it publishes. Browser tests run alongside it and are reported, but don't block publishing.
+
+One-time setup: in the repository on GitHub, open **Settings → Pages** and set **Source** to **GitHub Actions**. On a free GitHub plan the repository must be public for Pages to work.
+
+Asset paths are relative, so the site keeps working if the repository is renamed or moved to a custom domain.
+
 ## Design documents
 
 The design lives in `docs/`, with every review change kept as a tracked change:
