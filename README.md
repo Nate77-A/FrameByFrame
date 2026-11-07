@@ -35,7 +35,7 @@ The app needs no environment variables, so there is no `.env` file. `dist/` is a
 
 ## Publishing on GitHub Pages
 
-The site is at **https://nate77-a.github.io/FrAnimator/** once deployed. Every push to `main` runs [the workflow](.github/workflows/deploy.yml): typecheck, unit tests and build must pass before it publishes. Browser tests run alongside it and are reported, but don't block publishing.
+The site is at **https://nate77-a.github.io/FrameByFrame/** once deployed. Every push to `main` runs [the workflow](.github/workflows/deploy.yml): typecheck, unit tests and build must pass before it publishes. Browser tests run alongside it and are reported, but don't block publishing.
 
 One-time setup: in the repository on GitHub, open **Settings → Pages** and set **Source** to **GitHub Actions**. On a free GitHub plan the repository must be public for Pages to work.
 
