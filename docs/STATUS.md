@@ -18,14 +18,16 @@ Measured on 6 Nov 2026 on a Mac, using the production build where noted.
 
 An exported 12-frame test MP4 was decoded back and contained H.264 video, exactly 12 frames and an AAC audio track.
 
-GitHub Pages was simulated by serving the production build only at `/FrAnimator/`. In Chromium and WebKit there were no failed requests or errors, drawing and all three exports worked, and the app reloaded offline. The real GitHub workflow has not run yet.
+GitHub Pages was simulated by serving the production build only from a subfolder. In Chromium and WebKit there were no failed requests or errors, drawing and all three exports worked, and the app reloaded offline.
+
+On GitHub, the first workflow run passed install, typecheck, unit tests and build. Its deploy step failed because Pages was not yet set to use GitHub Actions.
 
 ## Not yet verified
 
 These need a real device or a person:
 
 - **Real iPad and Apple Pencil.** Pen pressure, palm rejection and pinch were tested with simulated pointer events in desktop browser engines, and iPad layouts at iPad screen sizes. Nothing has run on an actual iPad, and tilt has no automated test.
-- **Browser tests on Linux.** The workflow's browser test job has never run. It may report differences such as WebM instead of MP4, and it does not block publishing.
+- **Browser tests on Linux.** This job failed on the first GitHub run. The cause is not known yet, because reading its logs needs a GitHub login. It passes on the Mac and does not block publishing.
 - **Firefox.** Playwright's Firefox build would not start on this Mac ("Could not find profile folder"), so Firefox is untested. Run it with `E2E_FIREFOX=1 npm run test:e2e`.
 - **60 FPS target.** Unique frames per second fell a little short in the measurement above. That was a software-rendered dev build, so measure again on a real device.
 - **Saving with the system file dialog.** The project format and the save and reopen round trip are tested, but not the browser's own Save dialog.
