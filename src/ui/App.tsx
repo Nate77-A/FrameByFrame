@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Clapperboard, SlidersHorizontal } from 'lucide-react';
 import { COMPACT_QUERY, useStore, getState } from '../core/store';
 import { offerRestore, startAutosave } from '../core/autosave';
-import { openProject, saveProject } from '../core/projectFile';
+import { openProject, PROJECT_EXT, saveProject } from '../core/projectFile';
 import { installPlayback } from '../audio/engine';
 import { importImage } from '../tools/actions';
 import { keyState } from '../tools/input';
@@ -85,7 +85,7 @@ function useDrop() {
     const drop = (e: DragEvent) => {
       e.preventDefault();
       for (const f of e.dataTransfer?.files ?? []) {
-        if (f.name.endsWith('.kanvaso')) void openProject(f);
+        if (PROJECT_EXT.test(f.name)) void openProject(f);
         else if (f.type.startsWith('image/')) void importImage(f).catch(() => getState().toast("Oops! That picture wouldn't load. 🔄"));
         else if (f.type.startsWith('audio/') || /\.(wav|mp3|ogg|m4a)$/i.test(f.name)) void importAudioFile(f);
       }

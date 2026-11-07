@@ -1,8 +1,8 @@
-# Your Kanvaso Guide 🎨
+# Your FrAnimator Guide 🎨
 
-Kanvaso lets you draw pictures and make them move!
+FrAnimator lets you draw pictures and make them move!
 
-![Kanvaso](images/kanvaso.png)
+![FrAnimator](images/franimator.png)
 
 ## Make your first animation
 
@@ -50,7 +50,7 @@ The timeline at the bottom shows all your frames.
 ## Keep your work safe 💾
 
 - Choose **File → Save** to keep your project.
-- Kanvaso also saves a copy by itself every 30 seconds, just in case!
+- FrAnimator also saves a copy by itself every 30 seconds, just in case!
 
 ## Share it 🎬
 

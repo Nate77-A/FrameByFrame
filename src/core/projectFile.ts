@@ -1,4 +1,4 @@
-/** .kanvaso files: a ZIP of project.json, PNG bitmaps and audio (spec §4.6.1, §5.0). */
+/** .franimator files: a ZIP of project.json, PNG bitmaps and audio (spec §4.6.1, §5.0). */
 import type { Item, ProjectDoc } from './types';
 import { bitmaps } from './bitmaps';
 import { allBitmapIds, migrateDoc } from './doc';
@@ -7,6 +7,9 @@ import { getState } from './store';
 import { clearAutosave } from './idb';
 import { sceneRef } from '../render/scene';
 import { playChime } from '../audio/sfx';
+
+/** .kanvaso is the app's earlier name; those projects still open. */
+export const PROJECT_EXT = /\.(franimator|kanvaso)$/;
 
 const zipLib = () => import('jszip').then((m) => m.default);
 
@@ -31,7 +34,7 @@ export async function unpackProject(file: Blob): Promise<ProjectDoc> {
   const JSZip = await zipLib();
   const zip = await JSZip.loadAsync(file);
   const json = zip.file('project.json');
-  if (!json) throw new Error('not a kanvaso project');
+  if (!json) throw new Error('not a franimator project');
   const doc = migrateDoc(JSON.parse(await json.async('string')));
   bitmaps.clear();
   clearAudio();
@@ -63,14 +66,14 @@ export const forgetHandle = () => { handle = null; };
 export async function saveProject(saveAs = false): Promise<void> {
   const s = getState();
   const blob = await packProject(s.doc);
-  const name = `${s.fileName}.kanvaso`;
+  const name = `${s.fileName}.franimator`;
   const picker = (window as unknown as { showSaveFilePicker?: (o: unknown) => Promise<SaveHandle> }).showSaveFilePicker;
   if (picker) {
     try {
-      if (saveAs || !handle) handle = await picker({ suggestedName: name, types: [{ description: 'Kanvaso project', accept: { 'application/zip': ['.kanvaso'] } }] });
+      if (saveAs || !handle) handle = await picker({ suggestedName: name, types: [{ description: 'FrAnimator project', accept: { 'application/zip': ['.franimator'] } }] });
       const w = await handle.createWritable();
       await w.write(blob); await w.close();
-      getState().set({ fileName: handle.name.replace(/\.kanvaso$/, ''), savedRevision: s.revision });
+      getState().set({ fileName: handle.name.replace(PROJECT_EXT, ''), savedRevision: s.revision });
       return done();
     } catch (e) {
       if ((e as Error).name === 'AbortError') return;
@@ -91,7 +94,7 @@ export async function openProject(file: File): Promise<void> {
   try {
     const doc = await unpackProject(file);
     forgetHandle();
-    s.replaceDoc(doc, file.name.replace(/\.kanvaso$/, ''));
+    s.replaceDoc(doc, file.name.replace(PROJECT_EXT, ''));
     sceneRef.current?.fit();
     s.toast('Project opened! 🎨');
   } catch (e) {

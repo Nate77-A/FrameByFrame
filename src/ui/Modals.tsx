@@ -185,7 +185,7 @@ function RecordModal() {
 }
 
 function About() {
-  return <Modal title="About Kanvaso" onClose={close}><p>Kanvaso is a place to draw and bring your pictures to life, one frame at a time. 🎨</p><p>Everything stays on your device. Nothing is uploaded and nobody is watching.</p><div className="row" style={{ justifyContent: 'flex-end' }}><button className="btn primary" onClick={close}>Let's draw!</button></div></Modal>;
+  return <Modal title="About FrAnimator" onClose={close}><p>FrAnimator is a place to draw and bring your pictures to life, one frame at a time. 🎨</p><p>Everything stays on your device. Nothing is uploaded and nobody is watching.</p><div className="row" style={{ justifyContent: 'flex-end' }}><button className="btn primary" onClick={close}>Let's draw!</button></div></Modal>;
 }
 function Help() {
   const rows: [string, string][] = [['Space (tap)', 'Play or pause'], ['Space + drag', 'Slide the canvas'], [', and .', 'Back or forward one frame'], ['Ctrl/⌘ Z', 'Undo'], ['Ctrl/⌘ Shift Z', 'Redo'], ['V P B E U T G I H Z', 'Pick a tool'], ['C', 'Open colors'], ['D', 'Black and white colors'], ['X', 'Swap colors'], ['Delete', 'Delete what you selected'], ['Two fingers', 'Slide and zoom on a tablet']];
