@@ -18,7 +18,7 @@ type Drag =
 
 const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export function emitEditText(id: string) { window.dispatchEvent(new CustomEvent('kanvaso:edit-text', { detail: id })); }
+export function emitEditText(id: string) { window.dispatchEvent(new CustomEvent('franimator:edit-text', { detail: id })); }
 
 export function attachInput(el: HTMLDivElement, scene: Scene, ring: HTMLDivElement): () => void {
   let drag: Drag | null = null;

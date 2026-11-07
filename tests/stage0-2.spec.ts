@@ -74,7 +74,7 @@ test('stage 2: a stroke over a shape lands on top; eraser cuts the shape', async
   expect(await pixel(page, 200, 150)).toEqual([255, 0, 0, 255]);
 });
 
-test('stage 1+2: drawing survives a .kanvaso save and reopen', async ({ page }) => {
+test('stage 1+2: drawing survives a .franimator save and reopen', async ({ page }) => {
   await open(page);
   await line(page, [[100, 100], [300, 100]]);
   const bytes = await page.evaluate(async () => {

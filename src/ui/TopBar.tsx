@@ -61,7 +61,7 @@ export function newProjectFlow() {
   if (s.revision !== s.savedRevision) s.ask('Start a new project? Unsaved work will be gone.', 'Start fresh', go);
   else go();
 }
-export const openFlow = () => pickFile('.kanvaso,application/zip', (f) => void openProject(f));
+export const openFlow = () => pickFile('.franimator,.kanvaso,application/zip', (f) => void openProject(f));
 
 function FileMenu() {
   const set = useStore((s) => s.set);
@@ -113,7 +113,7 @@ export function TopBar() {
   const { undo, redo, canUndo, canRedo, set, compact } = useStore();
   return (
     <header className="topbar">
-      <button className="logo" {...tip('Kanvaso! Click to learn about this app.')} onClick={() => set({ modal: 'about' })}>Kan<b>vaso</b></button>
+      <button className="logo" {...tip('FrAnimator! Click to learn about this app.')} onClick={() => set({ modal: 'about' })}>Fr<b>Animator</b></button>
       {compact
         ? <Dropdown label="Menu" help="All the menus!" icon={<Menu size={22} />}>{() => <div className="row" style={{ padding: 4 }}><FileMenu /><EditMenu /><WindowMenu /></div>}</Dropdown>
         : <><FileMenu /><EditMenu /><WindowMenu /></>}

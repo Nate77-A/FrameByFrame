@@ -1,10 +1,8 @@
-# Kanvaso
+# FrAnimator
 
 A web-based 2D raster drawing and frame-by-frame animation tool for children. It runs in any modern browser on desktop and iPad, works offline, and keeps everything on the device.
 
-![Kanvaso editor](docs/images/kanvaso.png)
-
-"Kanvaso" is the working title from the specification.
+![FrAnimator editor](docs/images/franimator.png)
 
 ## Quick start
 
@@ -71,7 +69,7 @@ Project state is plain immutable data. Konva is only a view of it.
 
 | Folder | Holds |
 | --- | --- |
-| `src/core` | Document types and helpers, store, history, bitmaps, `.kanvaso` files, auto-save |
+| `src/core` | Document types and helpers, store, history, bitmaps, `.franimator` files, auto-save |
 | `src/render` | Live scene, node factory, shared compositor, thumbnails, shape geometry |
 | `src/tools` | Pointer pipeline, brush engine, flood fill, snapping, canvas actions |
 | `src/audio` | Audio assets, Web Audio playback and mixing, synthesised sound effects |

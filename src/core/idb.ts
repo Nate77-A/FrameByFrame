@@ -1,6 +1,6 @@
 /** Thin IndexedDB wrapper for the auto-save slot. */
 const open = () => new Promise<IDBDatabase>((res, rej) => {
-  const r = indexedDB.open('kanvaso', 1);
+  const r = indexedDB.open('franimator', 1);
   r.onupgradeneeded = () => r.result.createObjectStore('autosave');
   r.onsuccess = () => res(r.result);
   r.onerror = () => rej(r.error);

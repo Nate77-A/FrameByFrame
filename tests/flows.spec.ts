@@ -234,3 +234,23 @@ test('record panel captures the microphone and adds a clip', async ({ page, brow
   expect(len).toBeGreaterThan(0.5);
   expect(errors).toEqual([]);
 });
+
+test('saves as .franimator and still opens older .kanvaso projects', async ({ page }) => {
+  await page.addInitScript(() => { delete (window as any).showSaveFilePicker; });
+  await open(page);
+  await expect(page).toHaveTitle('FrAnimator');
+  await line(page, [[100, 100], [300, 100]]);
+  const dl = page.waitForEvent('download');
+  await menu(page, 'File', /^Save(?! As)/);
+  const file = await dl;
+  expect(file.suggestedFilename()).toBe('my-animation.franimator');
+  const old = join(tmpdir(), `old-${Date.now()}.kanvaso`);
+  writeFileSync(old, readFileSync(await file.path()));
+  await page.keyboard.press('Control+z');
+  await expect.poll(() => count(page)).toBe(0);
+  const chooser = page.waitForEvent('filechooser');
+  await menu(page, 'File', /^Open/);
+  await (await chooser).setFiles(old);
+  await expect.poll(() => count(page)).toBe(1);
+  expect(await st(page, '(s) => s.fileName')).toMatch(/^old-\d+$/);
+});

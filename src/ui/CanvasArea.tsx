@@ -89,9 +89,9 @@ export function CanvasArea() {
     const ro = new ResizeObserver(() => scene.resize());
     ro.observe(host.current!);
     const edit = (e: Event) => setEditing((e as CustomEvent<string>).detail);
-    window.addEventListener('kanvaso:edit-text', edit);
+    window.addEventListener('franimator:edit-text', edit);
     void document.fonts?.ready.then(() => { sceneRef.current?.sync(); });
-    return () => { window.removeEventListener('kanvaso:edit-text', edit); ro.disconnect(); stop(); scene.destroy(); sceneRef.current = null; };
+    return () => { window.removeEventListener('franimator:edit-text', edit); ro.disconnect(); stop(); scene.destroy(); sceneRef.current = null; };
   }, []);
   return (
     <div className="canvas-area" data-testid="canvas-area">
