@@ -4,6 +4,7 @@ import type { Gradient, Item, Paint, ShapeItem, TextItem } from '../core/types';
 import { bitmaps, ctx2d, makeCanvas } from '../core/bitmaps';
 import { blendToComposite } from '../core/store';
 import { traceShape } from './geometry';
+import { contentBox } from './content';
 
 export function gradientCanvas(g: Gradient, w: number, h: number): HTMLCanvasElement {
   const c = makeCanvas(w, h);
@@ -48,7 +49,7 @@ export function measureText(t: TextItem): { width: number; height: number } {
 function buildNode(item: Item): Konva.Node {
   const base = {
     id: item.id, x: item.x, y: item.y, rotation: item.rotation, scaleX: item.scaleX, scaleY: item.scaleY,
-    opacity: item.opacity, offsetX: item.width / 2, offsetY: item.height / 2, listening: false,
+    opacity: item.opacity, offsetX: item.anchor?.x ?? item.width / 2, offsetY: item.anchor?.y ?? item.height / 2, listening: false,
   };
   switch (item.type) {
     case 'raster':
@@ -56,6 +57,8 @@ function buildNode(item: Item): Konva.Node {
       const canvas = bitmaps.get(item.bitmap);
       const node = new Konva.Image({ ...base, image: (canvas ?? undefined) as unknown as HTMLImageElement, width: item.width, height: item.height });
       if (item.type === 'image' && canvas) applyFilters(node, item.filters);
+      // The selection box hugs the drawing; the canvas behind it can stay full size.
+      if (item.type === 'raster') node.getSelfRect = () => contentBox(item);
       return node;
     }
     case 'shape': {

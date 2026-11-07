@@ -2,11 +2,39 @@
 import type { ItemBase } from '../core/types';
 export interface Box { x: number; y: number; width: number; height: number }
 
-export function itemBounds(i: ItemBase): Box {
-  const hw = (i.width * Math.abs(i.scaleX)) / 2, hh = (i.height * Math.abs(i.scaleY)) / 2;
-  const a = (i.rotation * Math.PI) / 180, c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a));
-  const ex = hw * c + hh * s, ey = hw * s + hh * c;
-  return { x: i.x - ex, y: i.y - ey, width: ex * 2, height: ey * 2 };
+export interface Pt { x: number; y: number }
+type Placed = Pick<ItemBase, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'scaleX' | 'scaleY' | 'anchor'>;
+
+export const anchorOf = (i: Placed): Pt => i.anchor ?? { x: i.width / 2, y: i.height / 2 };
+
+/** Item coordinates to canvas coordinates. */
+export function toWorld(i: Placed, p: Pt): Pt {
+  const a = anchorOf(i), r = (i.rotation * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
+  const dx = (p.x - a.x) * i.scaleX, dy = (p.y - a.y) * i.scaleY;
+  return { x: i.x + dx * c - dy * s, y: i.y + dx * s + dy * c };
+}
+/** Canvas coordinates to item coordinates. */
+export function toLocal(i: Placed, p: Pt): Pt {
+  const a = anchorOf(i), r = (i.rotation * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
+  const dx = p.x - i.x, dy = p.y - i.y;
+  return { x: a.x + (dx * c + dy * s) / i.scaleX, y: a.y + (-dx * s + dy * c) / i.scaleY };
+}
+/** New anchor, with x / y adjusted so the item does not move on the canvas. */
+export function withAnchor(i: Placed, anchor: Pt) {
+  const w = toWorld(i, anchor);
+  return { anchor, x: w.x, y: w.y };
+}
+export function boxPoints(b: Box): Pt[] {
+  const xs = [b.x, b.x + b.width / 2, b.x + b.width], ys = [b.y, b.y + b.height / 2, b.y + b.height];
+  return ys.flatMap((y) => xs.map((x) => ({ x, y })));
+}
+
+/** Canvas-aligned bounds of a rectangle inside the item (the whole item by default). */
+export function itemBounds(i: Placed, box: Box = { x: 0, y: 0, width: i.width, height: i.height }): Box {
+  const pts = [[box.x, box.y], [box.x + box.width, box.y], [box.x + box.width, box.y + box.height], [box.x, box.y + box.height]]
+    .map(([x, y]) => toWorld(i, { x, y }));
+  const x = Math.min(...pts.map((p) => p.x)), y = Math.min(...pts.map((p) => p.y));
+  return { x, y, width: Math.max(...pts.map((p) => p.x)) - x, height: Math.max(...pts.map((p) => p.y)) - y };
 }
 export const rectsOverlap = (a: Box, b: Box) =>
   a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;

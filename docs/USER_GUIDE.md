@@ -31,6 +31,14 @@ FrAnimator lets you draw pictures and make them move!
 
 Hold your mouse over anything to see what it does. On a tablet, press and hold.
 
+## Working with objects
+
+- **Move things:** use **Select** 👆 and drag. The box fits snugly around your drawing.
+- **Make separate drawings:** pick Select, then pick your Pencil again. Your next drawing is a new object.
+- **Choose where things turn from:** select an object and press the **target** button 🎯 next to the onion. Drag the red target anywhere, even outside the object. It's great for swinging arms and legs!
+- **Stick things together:** hold Shift and click two or more objects on the same layer, then press **Merge**. Words and shapes become part of a drawing, so you can't edit them after that.
+- **Change what's in front:** choose **Window → Object Order**, then drag objects up or down. The top of the list is in front.
+
 ## The timeline
 
 The timeline at the bottom shows all your frames.

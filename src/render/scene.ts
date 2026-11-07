@@ -7,6 +7,8 @@ import { blendToComposite, currentItems, getState, useStore, type Store } from '
 import { createNode } from './nodes';
 import { renderFrame } from './compositor';
 import { traceShape } from './geometry';
+import { pivotPatch } from './content';
+import type { Pt } from '../tools/bounds';
 
 interface LayerView {
   konva: Konva.Layer;
@@ -34,6 +36,8 @@ export class Scene {
   private gridShape: Konva.Shape;
   transformer: Konva.Transformer;
   private ghost: Konva.Node | null = null;
+  /** Shows the selected object's anchor point. Input handles grabbing it. */
+  private marker = new Konva.Group({ listening: false, visible: false });
   private views = new Map<string, LayerView>();
   private preview = new Konva.Image({ image: undefined, listening: false });
   private previewLayer: string | null = null;
@@ -59,7 +63,13 @@ export class Scene {
       boundBoxFunc: (o, n) => (Math.abs(n.width) < 4 || Math.abs(n.height) < 4 ? o : n),
     });
     this.transformer.on('transformend', () => this.onTransformEnd?.());
-    this.overlay.add(this.gridShape, this.transformer);
+    this.transformer.on('transform', () => this.syncMarker());
+    this.marker.add(
+      new Konva.Circle({ radius: 9, stroke: THEME.hot, strokeWidth: 3, fill: 'rgba(255,255,255,.75)' }),
+      new Konva.Line({ points: [-14, 0, 14, 0], stroke: THEME.hot, strokeWidth: 2 }),
+      new Konva.Line({ points: [0, -14, 0, 14], stroke: THEME.hot, strokeWidth: 2 }),
+    );
+    this.overlay.add(this.gridShape, this.transformer, this.marker);
     bitmaps.onLoaded = () => { this.views.forEach((v) => (v.items = null)); this.request(); };
     this.fit();
     this.unsub = useStore.subscribe((s, p) => this.onStore(s, p));
@@ -71,7 +81,7 @@ export class Scene {
   private onStore(s: Store, p: Store) {
     if (s.doc !== p.doc || s.frameIndex !== p.frameIndex || s.zoom !== p.zoom || s.panX !== p.panX || s.panY !== p.panY
       || s.selection !== p.selection || s.grid !== p.grid || s.tool !== p.tool || s.onion !== p.onion
-      || s.revision !== p.revision || s.playing !== p.playing || s.activeLayerId !== p.activeLayerId) this.request();
+      || s.revision !== p.revision || s.anchorMode !== p.anchorMode || s.playing !== p.playing || s.activeLayerId !== p.activeLayerId) this.request();
   }
   request() { if (!this.raf) this.raf = requestAnimationFrame(() => { this.raf = 0; this.sync(); }); }
 
@@ -180,9 +190,43 @@ export class Scene {
       : [];
     this.transformer.nodes(nodes);
     this.transformer.forceUpdate();
+    this.syncMarker();
     this.gridShape.visible(s.grid.show || doc.guides.v.length + doc.guides.h.length > 0);
     this.stage.batchDraw();
     this.frameSeen = frameIndex;
+  }
+
+  /** The selected item, read from its node so it stays right during a drag. */
+  liveSelected(): Item | null {
+    const s = getState();
+    if (s.tool !== 'select' || s.playing || s.selection.length !== 1) return null;
+    for (const v of this.views.values()) {
+      const e = v.nodes.get(s.selection[0]);
+      if (e) {
+        const n = e.node;
+        return { ...e.item, x: n.x(), y: n.y(), rotation: n.rotation(), scaleX: n.scaleX(), scaleY: n.scaleY() };
+      }
+    }
+    return null;
+  }
+  private syncMarker(at?: Pt) {
+    const s = getState();
+    const item = this.liveSelected();
+    this.marker.visible(!!item);
+    if (!item) return;
+    const pos = at ?? this.anchorWorld(item);
+    const k = (s.anchorMode ? 1.15 : 0.7) / s.zoom;
+    this.marker.setAttrs({ x: pos.x, y: pos.y, scaleX: k, scaleY: k, opacity: s.anchorMode ? 1 : 0.6 });
+    this.overlay.batchDraw();
+  }
+  placeMarker(p: Pt) { this.syncMarker(p); }
+  anchorWorld(item: Item): Pt {
+    const patch = pivotPatch(item) as { x?: number; y?: number };
+    return { x: patch.x ?? item.x, y: patch.y ?? item.y };
+  }
+  /** Which Transformer handle, if any, is under the pointer. */
+  handleName(clientX: number, clientY: number): string {
+    return this.overlay.getIntersection(this.toLocal(clientX, clientY))?.name() ?? '';
   }
 
   findNode(id: string): Konva.Node | null {
@@ -237,6 +281,7 @@ export class Scene {
       }
     });
     this.transformer.forceUpdate();
+    this.syncMarker();
     this.stage.batchDraw();
   }
 

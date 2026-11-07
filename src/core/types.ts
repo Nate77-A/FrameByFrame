@@ -10,11 +10,13 @@ export interface Gradient {
 }
 export type Paint = string | Gradient | null;
 
-/** x / y are the item's centre, so rotating and flipping stay in place. */
+/** x / y are where the anchor point sits on the canvas; the item turns and flips around it. */
 export interface ItemBase {
   id: string;
   x: number; y: number;
   width: number; height: number;
+  /** Anchor in the item's own coordinates. Without one, it is the item's centre. */
+  anchor?: { x: number; y: number };
   rotation: number;
   scaleX: number; scaleY: number;
   opacity: number;

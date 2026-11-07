@@ -14,6 +14,7 @@ import { TooltipLayer } from './Tooltip';
 import { Toolbar, TOOLS } from './Toolbar';
 import { openFlow, TopBar } from './TopBar';
 import { Modals } from './Modals';
+import { ObjectOrder } from './ObjectOrder';
 import { importAudioFile } from './audioImport';
 import { copySel, cutSel, pasteSel, selectAll } from './clipboard';
 import { Component, type ReactNode } from 'react';
@@ -108,6 +109,7 @@ function useCompact() {
 export function App() {
   const panels = useStore((s) => s.panels); const compact = useStore((s) => s.compact);
   const sheet = useStore((s) => s.sheet); const set = useStore((s) => s.set);
+  const orderOpen = useStore((s) => s.orderOpen);
   useShortcuts(); useDrop(); useCompact();
   useEffect(() => {
     const stops = [startAutosave(), installPlayback()];
@@ -139,6 +141,7 @@ export function App() {
           <aside className="props sheet" aria-label="Properties"><div className="sheet-handle" onPointerDown={() => set({ sheet: 'none' })} /><PropertiesBody /></aside>
         </>}
         {panels.status && <Status />}
+        {orderOpen && <ObjectOrder />}
         <TooltipLayer />
         <Modals />
       </div>

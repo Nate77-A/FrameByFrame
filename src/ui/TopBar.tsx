@@ -104,6 +104,7 @@ function WindowMenu() {
     <Item label="Timeline Panel" checked={s.panels.timeline} help="The frames along the bottom" onClick={() => s.togglePanel('timeline')} />
     <Item label="Audio Sound Effects" checked={s.modal === 'sfx'} help="Fun sounds to add! 🎵" onClick={() => s.set({ modal: s.modal === 'sfx' ? null : 'sfx' })} />
     <Item label="Record Your Audio" checked={s.modal === 'record'} help="Use your voice! 🎙" onClick={() => s.set({ modal: s.modal === 'record' ? null : 'record' })} />
+    <Item label="Object Order" checked={s.orderOpen} help="See every object on this layer and change which is in front! 📚" onClick={() => s.set({ orderOpen: !s.orderOpen })} />
     <Item label="Status Bar" checked={s.panels.status} help="The little info bar at the bottom" onClick={() => s.togglePanel('status')} />
     <Item label="Grid & Rulers" checked={s.grid.show} help="Lines to help you line things up" onClick={() => s.set({ grid: { ...s.grid, show: !s.grid.show, rulers: !s.grid.show } })} />
   </>}</Dropdown>;
