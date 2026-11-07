@@ -5,3 +5,6 @@ test-results
 playwright-report
 .DS_Store
 *.local
+
+# Separate clone of the GitHub repo; this project pushes to it directly
+FrAnimator/
