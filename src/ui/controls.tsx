@@ -55,3 +55,13 @@ export function ColorField({ label, value, onChange }: { label: string; value: s
     </div>
   );
 }
+
+export function Switch({ label, on, onChange, help }: { label: string; on: boolean; onChange(v: boolean): void; help?: string }) {
+  return (
+    <button className="switch-row" role="switch" aria-checked={on} aria-label={label} data-tooltip={help ?? label} onClick={() => onChange(!on)}>
+      <span>{label}</span>
+      <span className="switch-state">{on ? 'On' : 'Off'}</span>
+      <span className={`switch ${on ? 'on' : ''}`} aria-hidden />
+    </button>
+  );
+}

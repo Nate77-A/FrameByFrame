@@ -8,7 +8,7 @@ import { durationOf, getCel } from '../core/doc';
 import { getState, useStore } from '../core/store';
 import { getAudio } from '../audio/assets';
 import { setThumbListener, thumbFor } from '../render/thumbs';
-import { Percent, Seg, Slider } from './controls';
+import { Percent, Seg, Slider, Switch } from './controls';
 import { tip } from './Tooltip';
 
 const RULER = 24, ROW = 46, CELL = 48, GRAB = 12;
@@ -156,11 +156,26 @@ function LayerRow({ layer, index, count, startDrag }: { layer: Layer; index: num
 }
 
 function Badge({ label, help, children }: { label: string; help: string; children: (close: () => void) => React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [place, setPlace] = useState<React.CSSProperties | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const close = () => setPlace(null);
+  useEffect(() => {
+    if (!place) return;
+    const away = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) close(); };
+    document.addEventListener('pointerdown', away, true);
+    return () => document.removeEventListener('pointerdown', away, true);
+  }, [place]);
+  // Open beside the button so it stays clickable: above it, or below when it is near the top.
+  const toggle = (e: React.MouseEvent) => {
+    if (place) { close(); return; }
+    const r = e.currentTarget.getBoundingClientRect();
+    const left = Math.max(8, Math.min(r.left, innerWidth - 300));
+    setPlace(r.top > 320 ? { left, bottom: innerHeight - r.top + 8 } : { left, top: r.bottom + 8 });
+  };
   return (
-    <div>
-      <button className="btn pill small" aria-label={label} data-tooltip={help} onClick={() => setOpen(!open)}>{label}</button>
-      {open && <div className="pop" style={{ position: 'fixed', bottom: 'calc(var(--tl-h, 240px) - 8px)', minWidth: 240 }}>{children(() => setOpen(false))}</div>}
+    <div ref={ref}>
+      <button className="btn pill small" aria-label={label} aria-expanded={!!place} data-tooltip={help} onClick={toggle}>{label}</button>
+      {place && <div className="pop" style={{ position: 'fixed', minWidth: 240, width: 280, ...place }}>{children(close)}</div>}
     </div>
   );
 }
@@ -187,10 +202,13 @@ function Bar() {
       <button className="btn small" {...tip('Copy this layer!')} onClick={() => a.duplicateLayer(s.activeLayerId)}><Copy size={18} /></button>
       <button className="btn small" {...tip('Delete this layer')} onClick={() => a.deleteLayer(s.activeLayerId)}><Trash2 size={18} /></button>
       <div className="sep" />
-      <Badge label="🧅 Onion" help="Onion skin settings: how many ghost frames to show!">{() => <>
-        <Slider label="Frames before" min={0} max={5} value={s.onion.before} onChange={(before) => a.set({ onion: { ...s.onion, before, on: true } })} />
-        <Slider label="Frames after" min={0} max={5} value={s.onion.after} onChange={(after) => a.set({ onion: { ...s.onion, after, on: true } })} />
-        <Percent label="Strength" value={s.onion.opacity} onChange={(opacity) => a.set({ onion: { ...s.onion, opacity, on: true } })} />
+      <Badge label={`🧅 Onion: ${s.onion.on ? 'On' : 'Off'}`} help="Onion skin: see the frames before and after, like tracing paper! 🧅">{() => <>
+        <Switch label="Onion skin" on={s.onion.on} onChange={(on) => a.set({ onion: { ...s.onion, on } })} help="Turn the ghost frames on or off!" />
+        {s.onion.on && <>
+          <Slider label="Frames before" min={0} max={5} value={s.onion.before} onChange={(before) => a.set({ onion: { ...s.onion, before } })} />
+          <Slider label="Frames after" min={0} max={5} value={s.onion.after} onChange={(after) => a.set({ onion: { ...s.onion, after } })} />
+          <Percent label="Strength" value={s.onion.opacity} onChange={(opacity) => a.set({ onion: { ...s.onion, opacity } })} />
+        </>}
       </>}</Badge>
       <div className="spacer" />
       <button className="btn small" {...tip('Make frames smaller')} onClick={() => a.set({ timelineZoom: Math.max(0.1, s.zoom - 0.25) })}><Minus size={16} /></button>

@@ -8,7 +8,7 @@ FrAnimator lets you draw pictures and make them move!
 
 1. Pick the **Pencil** ✏️ and draw something.
 2. Press **+ Frame** to get a new, empty page.
-3. Press the **onion** button 🧅 to see your last drawing, like tracing paper.
+3. Press the **Onion** button 🧅 and switch it **On** to see your last drawing, like tracing paper. Switch it **Off** when you're done.
 4. Draw it again, moved a tiny bit.
 5. Do that a few more times.
 6. Press **Play** ▶️ and watch it move!

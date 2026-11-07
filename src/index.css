@@ -109,6 +109,15 @@ input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); }
 .swatch-grid button { aspect-ratio: 1; border-radius: 8px; transition: transform .15s var(--transition-bounce); min-width: 0; }
 .swatch-grid button:hover { transform: scale(1.15); }
 
+/* on/off switch */
+.switch-row { width: 100%; min-height: 44px; display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; text-align: left; }
+.switch-row > :first-child { flex: 1; }
+.switch-state { color: var(--text-secondary); font-size: 14px; }
+.switch { position: relative; flex: none; width: 52px; height: 30px; border-radius: 15px; background: var(--bg-tertiary); box-shadow: inset 0 0 0 2px rgba(160,160,192,.45); transition: background .15s; }
+.switch::after { content: ''; position: absolute; top: 4px; left: 4px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .2s var(--transition-bounce); }
+.switch.on { background: var(--accent-tertiary); box-shadow: none; }
+.switch.on::after { transform: translateX(22px); }
+
 /* timeline */
 .timeline { flex: none; display: flex; flex-direction: column; background: var(--bg-secondary); position: relative; z-index: 10; }
 .tl-resize { height: 8px; cursor: ns-resize; flex: none; touch-action: none; background: linear-gradient(transparent 3px, rgba(160,160,192,.25) 3px, rgba(160,160,192,.25) 5px, transparent 5px); }

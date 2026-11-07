@@ -20,7 +20,7 @@ An exported 12-frame test MP4 was decoded back and contained H.264 video, exactl
 
 GitHub Pages was simulated by serving the production build only from a subfolder. In Chromium and WebKit there were no failed requests or errors, drawing and all three exports worked, and the app reloaded offline.
 
-On GitHub, the first workflow run passed install, typecheck, unit tests and build. Its deploy step failed because Pages was not yet set to use GitHub Actions.
+The site is live on GitHub Pages. On the public site, drawing, GIF and MP4 export and offline reload worked in Chromium and WebKit, with no failed requests or errors.
 
 ## Not yet verified
 
